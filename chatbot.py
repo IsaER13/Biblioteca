@@ -2,7 +2,7 @@ import flet as ft
 import os
 import json
 from load_book import load_books, save_books
-from show_books import show_books, add_book
+from show_books import show_books, add_book, delete, update
 comandos = {
     "add":"agregar",
     "remove" : "eliminar",
@@ -14,41 +14,13 @@ books = load_books()
 def main (page: ft.Page):
     page.title = "biblioteca"
     messages = ft.Column(scroll = True, expand = True, width = page.width)
-    
-    def update(book):
-        print(book)
-        titulo =  ft.TextField( label = "titulo", value = book ["Titulo"])
-        autor =  ft.TextField(label = "Autor", value = book ["Autor"])
-        portada = ft.TextField(label = "Portada", value = book ["Portada"])
-        comentarios = ft.TextField(label = "comentarios", value = book ["comentarios"])
-        calificacion = ft.TextField(label = "calificacion", value = book ["calificacion"])
-        def on_save(e):
-            data = {
-            "Titulo" : titulo.value,
-            "Autor" : autor.value,
-            "Portada" : portada.value,
-            "comentarios" : comentarios.value,
-            "calificacion" : calificacion.value
-            }
-            books.append(data)
-            save_books(books)
-            messages.controls.append(ft.Text("libro actualizado exitosamente") )
-            page.update() 
-        buttons = ft.Button("Guardar", on_click =  on_save)
-        messages.controls.append(
-            ft.Column(
-                controls = [titulo, autor, portada, comentarios, calificacion, buttons]
-                       
-            )
-        ) 
-        page.update()
     def confirm(book):
         confirmation = ft.Column(
             controls=[
                 ft.Text("¿Estás seguro que quieres eliminar el libro?"),
                 ft.Row(
                     controls=[
-                        ft.Button("SI", on_click=lambda e, b=book: delete(b)),
+                        ft.Button("SI", on_click=lambda e, b=book: delete(books, b, messages, page)),
                         ft.Button("NO", on_click=lambda e, b=book: show_books())
                     ]
                 )
@@ -56,11 +28,7 @@ def main (page: ft.Page):
         )
         messages.controls.append(confirmation)
         page.update()
-    def delete(book):
-        books.remove(book)
-        save_books(books)
-        messages.controls.append(ft.Text("libro eliminado exitosamente"))
-        page.update()
+ 
     def show_details(book,list):
         row =  ft.Row(
                     controls = [
@@ -74,7 +42,7 @@ def main (page: ft.Page):
                     ft.Row(
                         controls=[
                             ft.Button("eliminar", on_click=lambda e, b=book: confirm(b)),
-                            ft.Button("actualizar", on_click=lambda e, b=book: update(b))
+                            ft.Button("actualizar", on_click=lambda e, b=book: update(books, b, messages, page))
                                 ]
                             )
                         ] 
@@ -83,13 +51,12 @@ def main (page: ft.Page):
              )
         list.controls.append(row)
         page.update()
-    add_book(books, messages, page)
     def add_message(e):
         message = text_area.value.strip()
         if message == "list":
             messages.controls.append(show_books(books, show_details))
         elif message == "add":
-           messages.controls.append(add_book())
+           messages.controls.append(add_book(books, messages, page))
         else:
             messages.controls.append(ft.Text(message))
         text_area.value = ""  # limpiar después de enviar
